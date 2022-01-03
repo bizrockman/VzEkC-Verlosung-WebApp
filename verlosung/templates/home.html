@@ -1,0 +1,138 @@
+{% extends "./base.html" %}
+
+{% block title %}VzEkC - Verlosung{% endblock %}
+
+{% block content %}
+    <div class="row mt-1">
+        <div class="col text-center">
+            <h1>VzEkC - Verlosung</h1>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <!-- Step 1 -->
+            {% if not request.session.nrOfPackages %}
+                <form action="/" method="post">
+
+                        <label for="nrOfPackages">Anzahl der Pakete</label>
+                        <div class="from-group form-row">
+                            <div class="col-8"><input type="text" name="nrOfPackages" id="nrOfPackages" class="form-control" placeholder="Zahl eingeben ..." /></div>
+                            <div class="col-4 text-right"> <input type="submit" value="Setzen" class="btn btn-primary"></div>
+                            <small id="emailHelp" class="col form-text text-muted">Die Anzahl der Pakete die zur Verlosung stehen</small>
+                        </div>
+
+
+                </form>
+            {% else %}
+                <div class="row"><div class="col">Anzahl der Pakete: <b>{{ request.session.nrOfPackages }}</b></div></div>
+            {% endif %}
+
+            <!-- Step 2 -->
+            {% if request.session.nrOfPackages and not request.session.packages %}
+                <form action="/" method="post">
+                    {% for i in "x"|ljust:request.session.nrOfPackages %}
+                        <div class="form-group form-row mt-4">
+                            <div class="col-6">
+                                <label for="nameOfPackage{{ forloop.counter }}">Paket {{ forloop.counter }} - Bezeichnung</label>
+                                <input type="text" name="nameOfPackage{{ forloop.counter }}" id="nameOfPackage{{ forloop.counter }}"
+                                       class="form-control" placeholder="Name des Pakets {{ forloop.counter }} eingeben ...">
+                            </div>
+                            <div class="col-6">
+                            <label for="nrOfPlayersOfPackage{{ forloop.counter }}">Anzahl Teilnehmer</label>
+                            <input type="text" name="nrOfPlayersOfPackage{{ forloop.counter }}" id="nrOfPlayersOfPackage{{ forloop.counter }}"
+                                class="form-control" placeholder="Anzahl Spieler für Paket {{ forloop.counter }} ...">
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="row">
+                        <div class="col text-right">
+                            <input type="submit" value="Setzen" class="btn btn-primary">
+                        </div>
+                    </div>
+                </form>
+
+            <!-- Step 3 -->
+            {% elif request.session.nrOfPackages and request.session.packages and not request.session.packages.1.players %}
+                <form action="/" method="post">
+                    {% for packageNr, package in request.session.packages.items %}
+                        <div class="row mt-4 mb-1">
+                            <div class="col bg-secondary text-light">{{ packageNr }} - <b>{{ package.name }}</b> hat {{ package.nrOfPlayers }} Teilnehmer</div>
+                        </div>
+                        {% for i in "x"|ljust:package.nrOfPlayers %}
+                            <div class="form-group form-row">
+                                <div class="col-6">
+                                    <label for="namePlayer{{ forloop.counter }}Package{{ packageNr }}">Name Teilnehmer {{ forloop.counter }}</label>
+                                    <input type="text" name="namePlayer{{ forloop.counter }}Package{{ packageNr }}"
+                                           id="namePlayer{{ forloop.counter }}Package{{ packageNr }}" class="form-control"
+                                            placeholder="Name Spieler {{ forloop.counter }} ...">
+                                </div>
+                                <div class="col-6">
+                                    <label for="nrLosePlayer{{ forloop.counter }}Package{{ packageNr }}">Anzahl Lose</label>
+                                    <input type="text" name="nrLosePlayer{{ forloop.counter }}Package{{ packageNr }}"
+                                                        id="nrLosePlayer{{ forloop.counter }}Package{{ packageNr }}"
+                                            class="form-control" placeholder="Anzahl Lose für Spieler {{ forloop.counter }} ...">
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                    <div class="row">
+                        <div class="col text-right">
+                            <input type="submit" value="Setzen" class="btn btn-primary">
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+
+            <!-- Step 4 -->
+            {% if request.session.packages and request.session.packages.1.players %}
+                {% for packageNr, package in request.session.packages.items %}
+                    <div class="row mt-4 mb-1">
+                        <div class="col bg-secondary text-light">
+                            {{ packageNr }} - {{ package.name }}
+                        </div>
+                    </div>
+                    {% for player in package.players %}
+                    <div class="row mt-1 mb-1">
+                        <div class="col">
+                            {{ player.name }} hat {{ player.nrLose }} Lose
+                        </div>
+                    </div>
+                    {% endfor%}
+                {% endfor %}
+
+                <div class="row mt-4 mb-4 text-center">
+                        <div class="col text-muted">
+                            TODO Tabelle
+                        </div>
+                    </div>
+
+                <form action="/" method="post">
+                    <label for="seed">TimeStamp</label>
+                    <div class="from-group form-row">
+                        <div class="col-8"><input type="text" name="seed" id="seed" class="form-control" placeholder="TimeStamp eingeben ..." /></div>
+                        <div class="col-4 text-right"> <input type="submit" name="start" value="Starte Verlosung" class="btn btn-primary"></div>
+                        <small id="seedHelp" class="col form-text text-muted">Hier den <a href="https://forum.classic-computing.de/forum/index.php?thread/21625-kleines-python-skript-zum-verlosen/&postID=257216#post257216" target="_blank">Zeitstempel des Freigabeposts</a> eingeben. Ansonsten
+                        wird ein zufälliger Wert gewählt.</small>
+                    </div>
+                </form>
+            {% endif %}
+
+            <!-- Step 5 -->
+            {% if lottery_message %}
+            <div class="row mt-4">
+                <div class="col">
+                    <pre style="overflow: visible;">{{ lottery_message }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col">
+            <a href="/?reset=1" class="btn btn-warning">Reset</a>
+        </div>
+    </div>
+
+{% endblock %}
